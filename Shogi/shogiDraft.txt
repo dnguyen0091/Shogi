@@ -1,0 +1,285 @@
+# import pygame module in this program
+import pygame
+#import cairosvg
+# activate the pygame library
+# initiate pygame and give permission
+# to use pygame's functionality.
+pygame.init()
+# define the RGB value for white,
+# green, blue colour .
+white = (255, 255, 255)
+green = (0, 255, 0)
+blue = (0, 0, 128)
+black = (0,0,0)
+brown = (121,68,68)
+# assigning values to X and Y variable
+width= 1000
+height = 1000
+
+
+def main():
+    # create the display surface object
+    display_surface = pygame.display.set_mode((width, height))
+    # set the pygame window name
+    pygame.display.set_caption('Shogi')
+    
+    board_size = 9
+    makeBoard(display_surface)
+    black_pieces = initPiecesBlack()
+    white_pieces = initPiecesWhite()
+    square_size = min(width, height) // board_size  # Size of each square in pixels
+    board = initBoard(white_pieces, black_pieces)
+    display_surface.fill(brown)
+    game_over = False
+    selected_piece = None
+    valid_moves = []
+
+    while not game_over:
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not game_over:
+                x_cord, y_cord = event.pos
+                board_x, board_y = x_cord // square_size, y_cord // square_size
+
+                # Check if there's a piece at the clicked position
+                for piece in black_pieces + white_pieces:
+                    if piece.x == board_x and piece.y == board_y:
+                        selected_piece = piece
+                        valid_moves = selected_piece.move() if selected_piece else []
+                        break
+
+            if event.type == pygame.QUIT:
+                game_over = True
+
+        # completely fill the surface object with brown color
+        display_surface.fill(brown)
+        makeBoard(display_surface)
+        
+        # Draw pieces on the board
+        for row in board:
+            for cell in row:
+                piece = cell['piece']
+                if piece is not None:
+                    display_surface.blit(piece.sprite, (cell['x'] * square_size, cell['y'] * square_size))
+
+        # Draw valid move indicators
+        for move_x, move_y in valid_moves:
+            if not isBlocked(move_x, move_y, board):
+                pygame.draw.rect(display_surface, (0, 255, 0, 100),
+                                 (move_x * square_size, move_y * square_size, square_size, square_size))
+
+        pygame.display.flip()
+
+    pygame.quit()
+    quit()
+
+
+        
+
+    # This part is missing from your code, you need to handle moving the selected piece based on player input
+    # and switching turns. I can provide guidance on how to implement this part if you need.
+
+def makeBoard(display_surface):
+    board_size = 9
+    display_width, display_height = display_surface.get_size()
+    square_size = min(display_width, display_height) // board_size  # Size of each square in pixels
+    for x in range(board_size):
+        for y in range(board_size):
+            rect = pygame.Rect(x*square_size, y*square_size, square_size, square_size)
+            pygame.draw.rect(display_surface, black, rect, 1)
+def initBoard(white_pieces,black_pieces):
+    board_size = 9
+    board = [[{'x': x, 'y': y, 'piece': None} for x in range(board_size)] for y in range(board_size)]
+    for piece in white_pieces:
+        board[piece.y][piece.x]['piece'] = piece
+    for piece in black_pieces:
+        board[piece.y][piece.x]['piece'] = piece
+    return board
+
+def initPiecesBlack():
+    black_pieces = []
+    
+    black_pieces.append(King(4,0,'black'))
+    black_pieces.append(GoldGeneral(3,0,'black'))
+    black_pieces.append(GoldGeneral(5,0,'black'))
+    black_pieces.append(SilverGeneral(2,0,'black'))
+    black_pieces.append(SilverGeneral(6,0,'black'))
+    black_pieces.append(Knight(1,0,'black'))
+    black_pieces.append(Knight(7,0,'black'))
+    black_pieces.append(Lance(0,0,'black'))
+    black_pieces.append(Lance(8,0,'black'))
+    black_pieces.append(Rook(1,1,'black'))
+    black_pieces.append(Bishop(7,1,'black'))
+    for i in range(9):
+        black_pieces.append(Pawn(i,2,'black'))
+    return black_pieces
+
+def initPiecesWhite():
+    white_pieces = []
+    white_pieces.append(King(4,8,'white'))
+    white_pieces.append(GoldGeneral(3,8,'white'))
+    white_pieces.append(GoldGeneral(5,8,'white'))
+    white_pieces.append(SilverGeneral(2,8,'white'))
+    white_pieces.append(SilverGeneral(6,8,'white'))
+    white_pieces.append(Knight(1,8,'white'))
+    white_pieces.append(Knight(7,8,'white'))
+    white_pieces.append(Lance(0,8,'white'))
+    white_pieces.append(Lance(8,8,'white'))
+    white_pieces.append(Rook(1,7,'white'))
+    white_pieces.append(Bishop(7,7,'white'))
+    for i in range(9):
+        white_pieces.append(Pawn(i,6,'white'))
+    return white_pieces
+
+def checkOutOfBounds(x,y):
+    if x >= 0 and x < 9 and y >= 0 and y < 9:
+        return True
+    return False
+
+def checkForPiece(x,y,board):
+    if board[y][x]['piece'] is not None:
+        return True
+    return False
+
+def isBlocked(x,y,board):
+    if checkForPiece(x,y,board):
+        return True
+    return False
+def ifFriendlyFire(team,turn):
+    if turn:
+        if team == 'white':
+            return True
+        else:
+            return False
+    else:
+        if team == 'black':
+            return True
+        else:
+            return False
+class Piece():
+    def __init__(self,type,x,y,team,sprite):
+        self.type = type
+        self.x = x
+        self.y = y
+        self.team = team
+        self.sprite = sprite
+        self.sprite = pygame.transform.scale(self.sprite, (100, 100))
+
+class King(Piece):
+    def __init__(self,x,y,team):
+        if team == 'black':
+            #cairosvg.svg2png(url='King2.svg', write_to='king2.png')
+            sprite = pygame.image.load('sprites/Top Board/King2.png')
+        else:
+            #cairosvg.svg2png(url='king.svg', write_to='king.png')
+            sprite = pygame.image.load('sprites/Bottom Board/king.png')
+        super().__init__('King',x,y,team,sprite)
+        
+    def move(self):
+        moveList = [(self.x+1,self.y+1),(self.x-1,self.y+1),(self.x+1,self.y-1),(self.x-1,self.y-1),(self.x,self.y+1),(self.x,self.y-1),(self.x+1,self.y),(self.x-1,self.y)]
+        validMoves = [move for move in moveList if not checkOutOfBounds(move[0], move[1])]
+        return validMoves
+
+class GoldGeneral(Piece):
+    def __init__(self,x,y,team):
+        if team == 'black':
+            #cairosvg.svg2png(url='GoldenGeneral2.svg', write_to='gold2.png')
+            sprite = pygame.image.load('sprites/Top Board/GoldGeneral2.png')
+        else:
+            #cairosvg.svg2png(url='GoldenGeneral.svg', write_to='gold.png')
+            sprite = pygame.image.load('sprites/Bottom Board/GoldGeneral.png')
+        super().__init__('GoldGeneral',x,y,team,sprite)
+
+    def move(self):
+        moveList = [(self.x+1,self.y+1),(self.x-1,self.y+1),(self.x,self.y+1),(self.x,self.y-1),(self.x+1,self.y),(self.x-1,self.y)]
+        validMoves = [move for move in moveList if not checkOutOfBounds(move[0], move[1])]
+
+class SilverGeneral(Piece):
+    def __init__(self,x,y,team):
+        if team == 'black':
+            #cairosvg.svg2png(url='SilverGeneral2.svg', write_to='silver2.png')
+            sprite = pygame.image.load('sprites/Top Board/SilverGeneral2.png')
+        else:
+            #cairosvg.svg2png(url='SilverGeneral.svg', write_to='silver.png')
+            sprite = pygame.image.load('sprites/Bottom Board/SilverGeneral.png')
+        super().__init__('SilverGeneral',x,y,team,sprite)
+    def move(self):
+        moveList=[(self.x+1,self.y+1),(self.x-1,self.y+1),(self.x,self.y+1),(self.x,self.y-1)]
+        validMoves = [move for move in moveList if not checkOutOfBounds(move[0], move[1])]
+        return validMoves
+
+class Knight(Piece):
+    def __init__(self,x,y,team):
+        if team == 'black':
+            #cairosvg.svg2png(url='Knight2.svg', write_to='knight2.png')
+            sprite = pygame.image.load('sprites/Top Board/Knight2.png')
+        else:
+            #cairosvg.svg2png(url='Knight.svg', write_to='knight.png')
+            sprite = pygame.image.load('sprites/Bottom Board/Knight.png')
+        super().__init__('Knight',x,y,team,sprite)
+    def move(self):
+        moveList =[(self.x+2,self.y+1),(self.x+2,self.y-1)]
+        validMoves = [move for move in moveList if not checkOutOfBounds(move[0], move[1])]
+class Rook(Piece):
+    def __init__(self,x,y,team):
+        if team == 'black':
+            #cairosvg.svg2png(url='Rook2.svg', write_to='rook2.png')
+            sprite = pygame.image.load('sprites/Top Board/Rook2.png')
+        else:
+            #cairosvg.svg2png(url='Rook.svg', write_to='rook.png')
+            sprite = pygame.image.load('sprites/Bottom Board/Rook.png')
+        super().__init__('Rook',x,y,team,sprite)
+    def move(self):
+        moveList= []
+        for i in range(9):
+            moveList.append((self.x,i))
+            moveList.append((i,self.y))
+        validMoves = [move for move in moveList if not checkOutOfBounds(move[0], move[1])]
+        return validMoves
+class Bishop(Piece):
+    def __init__(self,x,y,team):
+        if team == 'black':
+            #cairosvg.svg2png(url='Bishop2.svg', write_to='bishop2.png')
+            sprite = pygame.image.load('sprites/Top Board/Bishop2.png')
+        else:
+            #cairosvg.svg2png(url='Bishop.svg', write_to='bishop.png')
+            sprite = pygame.image.load('sprites/Bottom Board/Bishop.png')
+        super().__init__('Bishop',x,y,team,sprite)
+    def move(self):
+        moveList = []
+        for i in range(9):
+            moveList.append((self.x+i,self.y+i))
+            moveList.append((self.x-i,self.y-i))
+            moveList.append((self.x+i,self.y-i))
+            moveList.append((self.x-i,self.y+i))
+        validMoves = [move for move in moveList if not checkOutOfBounds(move[0], move[1])]
+        return validMoves
+class Pawn(Piece):
+    def __init__(self,x,y,team):
+        if team == 'black':
+            #cairosvg.svg2png(url='pawn2.svg', write_to='pawn2.png')
+            sprite = pygame.image.load('sprites/Top Board/pawn2.png')
+        else:
+            #cairosvg.svg2png(url='pawn.svg', write_to='pawn.png')
+            sprite = pygame.image.load('sprites/Bottom Board/pawn.png')
+        super().__init__('Pawn',x,y,team,sprite)
+    def move(self):
+        moveList = [(self.x,self.y+1)]
+        validMoves = [move for move in moveList if not checkOutOfBounds(move[0], move[1])]
+        return validMoves
+class Lance(Piece):
+    def __init__(self,x,y,team):
+        if team == 'black':
+            #cairosvg.svg2png(url='Lance2.svg', write_to='Lance2.png')
+            sprite = pygame.image.load('sprites/Top Board/Lance2.png')
+        else:
+            #cairosvg.svg2png(url='Lance.svg', write_to='Lance.png')
+            sprite = pygame.image.load('sprites/Bottom Board/Lance.png')
+        super().__init__('Lance',x,y,team,sprite)
+    def move(self):
+        moveList = []
+        for i in range(9):
+            moveList.append((self.x,i))
+        validMoves = [move for move in moveList if not checkOutOfBounds(move[0], move[1])]
+        return validMoves
+
+main()
